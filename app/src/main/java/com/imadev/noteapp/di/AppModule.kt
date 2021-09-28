@@ -9,6 +9,7 @@ import androidx.security.crypto.MasterKeys.AES256_GCM_SPEC
 import com.imadev.noteapp.data.local.NotesDatabase
 import com.imadev.noteapp.data.remote.BasicAuthInterceptor
 import com.imadev.noteapp.data.remote.NoteApi
+import com.imadev.noteapp.other.ConnectionLiveData
 import com.imadev.noteapp.other.Constants.BASE_URL
 import com.imadev.noteapp.other.Constants.DATABASE_NAME
 import com.imadev.noteapp.other.Constants.ENCRYPTED_SHARED_PREF_NAME
@@ -18,6 +19,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
@@ -48,7 +50,13 @@ object AppModule {
     fun provideNoteApi(
         basicAuthInterceptor: BasicAuthInterceptor
     ): NoteApi {
+
+        val logging = HttpLoggingInterceptor()
+
+        logging.level = HttpLoggingInterceptor.Level.BODY
+
         val client = OkHttpClient.Builder()
+            .addInterceptor(logging)
             .addInterceptor(basicAuthInterceptor)
             .build()
         return Retrofit.Builder()
@@ -75,4 +83,11 @@ object AppModule {
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
     }
+
+
+    @Singleton
+    @Provides
+    fun provideConnectionLiveData(
+        @ApplicationContext context: Context
+    ) = ConnectionLiveData(context)
 }
